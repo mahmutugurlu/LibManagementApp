@@ -4,13 +4,19 @@ import com.tpe.domain.Book;
 import com.tpe.dto.BookDTO;
 import com.tpe.service.BookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController //rest api üretir --> return : JSON (@ResponseBody istekleri JSON formatina cevirir)
 //@Controller- dynamic app --> return : ModelAndView, String
@@ -89,6 +95,85 @@ public class BookController {
 
         return ResponseEntity.ok(bookDTO);
     }
+
+
+    //6- Get a Book by its Title with RequestParam
+    //http://localhost:8080/books/search?title=Atomic Habits
+
+    @GetMapping("/search")
+    public ResponseEntity<List<BookDTO>> filterBooksByTitle(@RequestParam("title") String title){
+
+        List<BookDTO> books=bookService.filterBooksByTitle(title);
+
+        return ResponseEntity.ok(books);
+
+    }
+
+
+    //Get Books by its Title and PublicationYear
+    //http://localhost:8080/books/SuçveCeza/1940 + GET
+    //http://localhost:8080/books/filter?title=SuçveCeza&publication=1940 + GET
+    //repository:JPArepositorynin metodlarını türeterek (title,year)
+
+
+
+    //7- Get Books With Page
+    // http://localhost:8080/books/sayfa?page=1
+    //                              &size=2
+    //                              &sort=publicationYear
+    //                              &direction=ASC/DESC + GET
+
+    @GetMapping("/sayfa")
+    public ResponseEntity<Page<Book>> getAllBooksByPage(@RequestParam(value = "page",defaultValue = "1") int pageNo,
+                                                        @RequestParam(value = "size",defaultValue = "2") int size,
+                                                        @RequestParam("sort") String prop,//hangi propertye,fielde göre siralayacagini belirtiriz, yazar mi, yil mi, property adini yazarak yapariz
+                                                        @RequestParam("direction")Sort.Direction direction)
+    {
+        Pageable pageable= PageRequest.of(pageNo-1,size,Sort.by(direction,prop));
+        Page<Book> bookPage=bookService.getBooksByPagination(pageable);
+        return ResponseEntity.ok(bookPage);
+
+    }
+
+
+    //8- Update a Book With Using DTO
+    // http://localhost:8080/books/update/2
+
+    @PatchMapping("/update/{id}")
+    public ResponseEntity<Map<String,String>> updateBook(@PathVariable Long id, @Valid @RequestBody BookDTO bookDTO){
+
+        Book updatedbook =bookService.updateBookById(id,bookDTO);
+
+        Map<String,String> response=new HashMap<>();
+        response.put("Kitap başarıyla güncellendi", updatedbook.getTitle());
+
+        return new ResponseEntity<>(response,HttpStatus.CREATED);//201
+
+    }
+    // 2 den fazla mesaj döndürecegimiz icin map kullandik, update, basari ve degistirlen kitap adini mesaj olarak
+    // döndürecegiz
+
+
+
+        //9- Get a Book By Its Author Using JPQL
+        // http://localhost:8080/books/a?author=AB
+
+    @GetMapping("/author")
+    public ResponseEntity<List<BookDTO>> getBooksByAuthor(@RequestParam("author") String author){
+
+        List<BookDTO> books=bookService.getBooksByAuthor(author);
+
+        return ResponseEntity.ok(books);
+
+    }
+
+
+
+
+
+    //ÖDEV2- Get Books such that Its Author contains word
+    // http://localhost:8080/books/contain?author=as + GET
+
 
 
 

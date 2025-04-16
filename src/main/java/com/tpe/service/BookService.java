@@ -5,9 +5,12 @@ import com.tpe.dto.BookDTO;
 import com.tpe.exceptions.ResourceNotFoundException;
 import com.tpe.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service //burada gelen requestler ile ilgili logic islemler yapilacak
 @RequiredArgsConstructor //final olan fieldler icin otomatik contructor olusturur
@@ -63,6 +66,44 @@ public class BookService {
     }
 
 
+    //6-b
+
+    public List<BookDTO> filterBooksByTitle(String title) {
+        List<Book> books=bookRepository.findByTitle(title);
+        if (books.isEmpty()){
+            throw new ResourceNotFoundException("Bu isimde bir kitap bulunamadı!!! Kitap adı : "+title);
+        }
+        return books.stream().map(book -> new BookDTO(book)).collect(Collectors.toList());
+    }
+
+    //DTO classlar service katmanina kadar kullanilir,
+
+
+
+    //7-b
+    public Page<Book> getBooksByPagination(Pageable pageable) {
+        return bookRepository.findAll(pageable);
+    }
+
+
+    //8-b
+    public Book updateBookById(Long id, BookDTO bookDTO) {
+        Book foundBook=getBookById(id);
+        foundBook.setTitle(bookDTO.getTitle());
+        foundBook.setAuthor(bookDTO.getAuthor());
+        foundBook.setPublicationYear(bookDTO.getPublicationYear());
+        bookRepository.save(foundBook);//merge: update .. set
+        return foundBook;
+
+    }
+
+
+    //9-b
+    public List<BookDTO> getBooksByAuthor(String author) {
+
+        List<Book> books=bookRepository.filterBooksByAuthor(author);
+        return books.stream().map(book -> new BookDTO(book)).collect(Collectors.toList());
+    }
 
 
 
