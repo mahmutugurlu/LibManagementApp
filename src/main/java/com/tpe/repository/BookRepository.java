@@ -16,9 +16,16 @@ public interface BookRepository extends JpaRepository<Book,Long> {
     List<Book> findByTitle(String title);//Spring tarafından implemente edilir.
 
 
-    //9-c
+    //9-c :JPQL
     @Query("SELECT b FROM Book b WHERE b.author=:yazar")
     List<Book> filterBooksByAuthor(@Param("yazar") String author);
+
+    //9-c:Alternatif
+    @Query("SELECT b FROM Book b WHERE b.author=?1")
+    List<Book> filterBooksByAuthor2( String author);
+
+    //ödev2-c
+    List<Book> findAllByAuthorContaining(String author);//Spring tarafından implemente edilir.
 
 
 }

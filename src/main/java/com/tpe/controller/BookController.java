@@ -2,6 +2,7 @@ package com.tpe.controller;
 
 import com.tpe.domain.Book;
 import com.tpe.dto.BookDTO;
+import com.tpe.dto.OwnerDTO;
 import com.tpe.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -124,13 +125,13 @@ public class BookController {
     //                              &direction=ASC/DESC + GET
 
     @GetMapping("/sayfa")
-    public ResponseEntity<Page<Book>> getAllBooksByPage(@RequestParam(value = "page",defaultValue = "1") int pageNo,
+    public ResponseEntity<Page<BookDTO>> getAllBooksByPage(@RequestParam(value = "page",defaultValue = "1") int pageNo,
                                                         @RequestParam(value = "size",defaultValue = "2") int size,
                                                         @RequestParam("sort") String prop,//hangi propertye,fielde göre siralayacagini belirtiriz, yazar mi, yil mi, property adini yazarak yapariz
                                                         @RequestParam("direction")Sort.Direction direction)
     {
         Pageable pageable= PageRequest.of(pageNo-1,size,Sort.by(direction,prop));
-        Page<Book> bookPage=bookService.getBooksByPagination(pageable);
+        Page<BookDTO> bookPage=bookService.getBooksByPagination(pageable);
         return ResponseEntity.ok(bookPage);
 
     }
@@ -173,6 +174,39 @@ public class BookController {
 
     //ÖDEV2- Get Books such that Its Author contains word
     // http://localhost:8080/books/contain?author=as + GET
+
+    @GetMapping("/contain")
+    public ResponseEntity<List<BookDTO>> getBooksByAuthorContain(@RequestParam("author") String author){
+
+        List<BookDTO> books=bookService.getBooksByAuthorContain(author);
+
+        return ResponseEntity.ok(books);
+
+    }
+
+
+    //10- Add a Book to an Owner ????
+    // http://localhost:8080/books/add?book=3&owner=1
+
+    @PatchMapping("/add")
+    public ResponseEntity<String> addBookToOwner(@RequestParam("book") Long bookId,
+                                                 @RequestParam("owner") Long ownerId){
+
+        bookService.addBookToOwner(bookId,ownerId);
+
+        return ResponseEntity.ok("Kitap üyeye eklendi.");
+    }
+
+
+    //id si verilen kitap hangi üyede?
+    @GetMapping("/show/owner/{bookId}")
+    public ResponseEntity<OwnerDTO> showOwner(@PathVariable("bookId") Long bookId){
+
+        OwnerDTO owner=bookService.showOwner(bookId);
+
+        return ResponseEntity.ok(owner);
+
+    }
 
 
 

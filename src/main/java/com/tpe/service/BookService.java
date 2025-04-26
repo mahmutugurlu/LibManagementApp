@@ -1,7 +1,10 @@
 package com.tpe.service;
 
 import com.tpe.domain.Book;
+import com.tpe.domain.Owner;
 import com.tpe.dto.BookDTO;
+import com.tpe.dto.OwnerDTO;
+import com.tpe.exceptions.ConflictException;
 import com.tpe.exceptions.ResourceNotFoundException;
 import com.tpe.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final OwnerService ownerService;
 
 
     //1-b
@@ -81,8 +85,8 @@ public class BookService {
 
 
     //7-b
-    public Page<Book> getBooksByPagination(Pageable pageable) {
-        return bookRepository.findAll(pageable);
+    public Page<BookDTO> getBooksByPagination(Pageable pageable) {
+        return bookRepository.findAll(pageable).map(book -> new BookDTO(book));
     }
 
 
@@ -106,5 +110,50 @@ public class BookService {
     }
 
 
+    //ödev2-b
+    public List<BookDTO> getBooksByAuthorContain(String author) {
 
+        List<Book> books=bookRepository.findAllByAuthorContaining(author) ;
+        return getBookDTOList(books);
+    }
+
+    private static List<BookDTO> getBookDTOList(List<Book> books) {
+        return books.stream().map(book -> new BookDTO(book)).collect(Collectors.toList()); //sürekli kullanacagimiz kod bloku icin bu methotu yazdik
+    }
+
+
+
+    //10-b
+    public void addBookToOwner(Long bookId, Long ownerId) {
+        Book foundBook=getBookById(bookId);//owner:1-null V
+                                          //      2-başka bir üye X
+                                            //    3-aynı üye:kendisinde X
+        Owner foundOwner=ownerService.getOwnerById(ownerId);
+
+        //belirtilen kitap daha önce ownera verilmiş mi?
+        if (foundOwner.getBookList().contains(foundBook)){
+            throw new ConflictException("Bu kitap üyenin listesinde zaten var!");
+        }else if(foundBook.getOwner()!=null){
+            throw new ConflictException("Bu kitap başka bir üyededir!");
+        }else{
+            //kitap üyeye vermek için aktif
+            foundBook.setOwner(foundOwner);
+            //owner.getBookList().add(foundBook);-->mappedBy
+            bookRepository.save(foundBook);
+        }
+
+    }
+
+
+    //kitap hangi üyede
+    public OwnerDTO showOwner(Long bookId) {
+
+        Book foundBook=getBookById(bookId);
+        Owner owner=foundBook.getOwner();//null,owner
+        if (owner!=null){
+            return new OwnerDTO(owner);
+        }else {
+            throw new ResourceNotFoundException("Bu kitap bir üyede değildir!!!");
+        }
+    }
 }

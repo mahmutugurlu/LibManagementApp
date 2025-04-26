@@ -37,7 +37,7 @@ public class Book {
 
     @ManyToOne//fk ekler
     @JsonIgnore
-    private Owner owner;
+    private Owner owner;  //kitap kimde oldugunu gösterir
 
 
 
